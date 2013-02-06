@@ -17,6 +17,11 @@ Functions
 1. `IMDB_Post_Ratings::init()->get_top_rated()` - get top rated posts. Supports **3** parameters, `post_type`, `limit`, `offset`
 1. `IMDB_Post_Ratings::init()->get_rating( $post_id )` - returns rating for single post.
 
+Screenshot
+---------------
+![screenshot](screenshot.png)
+
+
 Author
 ----------------------------
 [Tareq Hasan](http://tareq.wedevs.com)
