@@ -232,8 +232,6 @@ class IMDB_Post_Ratings {
             'vote_i18n' => '-',
             'vote' => '0'
         ));
-
-        exit;
     }
 
     /**

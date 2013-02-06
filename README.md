@@ -7,8 +7,8 @@ This is a simple yet another rating plugin.
 Features
 ---------------
 1. Creates a table `{wpprefix}_imdb_rating`
-2. Using `IMDB_Post_Ratings::init()->rating_input();` inside a post, provides a **10 star** rating.
-3. You can give a rating, also then can remove the rating, give again…
+2. Using `IMDB_Post_Ratings::init()->rating_input();` inside a post, provides a **10 star** rating. Change the number using the filter `ip_base_rating`. Cool huh?
+3. You can give a rating, also then can remove the rating, give again, remove again, give again…
 
 Functions
 ------------------
