@@ -1,0 +1,42 @@
+.ip-rating-stars {
+    /*unicode-bidi: bidi-override;
+    direction: rtl;*/
+    cursor: pointer;
+    margin-right: 10px;
+}
+.ip-rating-stars > span {
+    display: inline-block;
+    position: relative;
+    /*width: 1.1em;*/
+    /*font-size: 24px;*/
+    background-image: url('../images/stars16.png');
+    background-position: left top;
+    width: 16px;
+    height: 16px;
+}
+
+.ip-rating-stars > span.hover {
+    background-position: 0 16px;
+}
+
+.ip-rating-stars > span.ipr-vote {
+    background-position: 0 32px;
+}
+
+.ip-rating-sep { color: #ccc; }
+a.ip-delete span {
+    color: #B30000;
+    background: #E0E0E0;
+    border-radius: 500px;
+    padding: 1px 4px;
+    font-size: 9px;
+}
+
+.ipr-loading {
+    background: url('../images/loading.gif');
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+}
+
+.ipr-hide { display: none; }
