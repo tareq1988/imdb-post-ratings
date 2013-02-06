@@ -176,8 +176,8 @@ class IMDB_Post_Ratings {
 
     /**
      * Ajax handler for inserting a vote
-     * 
-     * @return void 
+     *
+     * @return void
      */
     function ajax_insert_vote() {
         check_ajax_referer( 'ipr-ratings', 'nonce' );
@@ -211,8 +211,8 @@ class IMDB_Post_Ratings {
 
     /**
      * Ajax handler for deleting a vote
-     * 
-     * @return void 
+     *
+     * @return void
      */
     function ajax_delete_vote() {
         check_ajax_referer( 'ipr-ratings', 'nonce' );
@@ -238,7 +238,7 @@ class IMDB_Post_Ratings {
 
     /**
      * Gets a user vote for a post
-     * 
+     *
      * @param int $post_id
      * @param int $user_id
      * @return bool|object
@@ -249,7 +249,7 @@ class IMDB_Post_Ratings {
 
     /**
      * Insert a user vote
-     * 
+     *
      * @param int $post_id
      * @param int $user_id
      * @param int $vote
@@ -279,7 +279,7 @@ class IMDB_Post_Ratings {
 
     /**
      * Update a user vote
-     * 
+     *
      * @param int $post_id
      * @param int $user_id
      * @param int $vote
@@ -317,7 +317,7 @@ class IMDB_Post_Ratings {
 
     /**
      * Delete a user vote
-     * 
+     *
      * @param int $post_id
      * @param int $user_id
      * @return bool
@@ -328,9 +328,48 @@ class IMDB_Post_Ratings {
         return $this->db->query( $this->db->prepare( $query, $post_id, $user_id ) );
     }
 
+
     /**
-     * Display the rating bar 
-     * 
+     * Get rating for a post
+     *
+     * @param int $post_id
+     * @return obj
+     */
+    function get_rating( $post_id ) {
+        $sql = "SELECT SUM(vote) / COUNT(id) AS rating, COUNT(id) AS voter FROM {$this->table} WHERE post_id = %d";
+        $result = $this->db->get_row( $this->db->prepare( $sql, $post_id ) );
+
+        return $result;
+    }
+
+    /**
+     * Get top rated posts
+     *
+     * @param int $post_type
+     * @param int $count
+     * @param int $offset
+     * @return array
+     */
+    function get_top_rated( $post_type = '', $count = 10, $offset = 0 ) {
+        $where = '';
+
+        if ( $post_type ) {
+            $where = "WHERE post_type = '$post_type'";
+        }
+
+        $sql = "SELECT format(SUM(vote) / COUNT(id), 2) AS rating, COUNT(id) AS voter, post_id
+                FROM {$this->table}
+                $where
+                GROUP BY post_id
+                ORDER BY rating DESC
+                LIMIT $offset, $count";
+
+        return $this->db->get_results( $sql );
+    }
+
+    /**
+     * Display the rating bar
+     *
      * @global object $post
      * @param int $post_id
      */
