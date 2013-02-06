@@ -242,7 +242,9 @@ class IMDB_Post_Ratings {
      * @return bool|object
      */
     function get_user_vote( $post_id, $user_id ) {
-        return $this->db->get_row( $this->db->prepare("SELECT vote FROM {$this->table} WHERE post_id = %d AND user_id = %d", $post_id, $user_id ));
+        $sql = "SELECT vote FROM {$this->table} WHERE post_id = %d AND user_id = %d";
+
+        return $this->db->get_row( $this->db->prepare( $sql, $post_id, $user_id ));
     }
 
     /**
@@ -334,7 +336,10 @@ class IMDB_Post_Ratings {
      * @return obj
      */
     function get_rating( $post_id ) {
-        $sql = "SELECT SUM(vote) / COUNT(id) AS rating, COUNT(id) AS voter FROM {$this->table} WHERE post_id = %d";
+        $sql = "SELECT SUM(vote) / COUNT(id) AS rating, COUNT(id) AS voter
+                FROM {$this->table}
+                WHERE post_id = %d";
+
         $result = $this->db->get_row( $this->db->prepare( $sql, $post_id ) );
 
         return $result;
