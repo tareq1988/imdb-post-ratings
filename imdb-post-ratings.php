@@ -38,6 +38,9 @@ License: GPL2
 // don't call the file directly
 if ( !defined( 'ABSPATH' ) ) exit;
 
+// load the widget
+require_once dirname( __FILE__ ) . '/top-rated-widget.php';
+
 /**
  * IMDB_Post_Ratings class
  *
@@ -174,6 +177,10 @@ class IMDB_Post_Ratings {
         ) );
     }
 
+    function flush_cache( $post_id ) {
+        delete_transient( 'ipr_rating_' . $post_id );
+    }
+
     /**
      * Ajax handler for inserting a vote
      *
@@ -202,6 +209,9 @@ class IMDB_Post_Ratings {
                 $this->add_vote( $post_id, $user_id, $vote );
             }
         }
+        
+        // flush the cache
+        $this->flush_cache($post_id);
 
         wp_send_json_success( array(
             'vote_i18n' => number_format_i18n( $vote ),
@@ -227,6 +237,9 @@ class IMDB_Post_Ratings {
         $user_id = get_current_user_id();
 
         $this->delete_vote( $post_id, $user_id );
+        
+        // flush the cache
+        $this->flush_cache($post_id);
 
         wp_send_json_success( array(
             'vote_i18n' => '-',
@@ -336,11 +349,16 @@ class IMDB_Post_Ratings {
      * @return obj
      */
     function get_rating( $post_id ) {
-        $sql = "SELECT SUM(vote) / COUNT(id) AS rating, COUNT(id) AS voter
+        $result = get_transient( 'ipr_rating_' . $post_id );
+
+        if ( false === $result ) {
+            $sql = "SELECT SUM(vote) / COUNT(id) AS rating, COUNT(id) AS voter
                 FROM {$this->table}
                 WHERE post_id = %d";
 
-        $result = $this->db->get_row( $this->db->prepare( $sql, $post_id ) );
+            $result = $this->db->get_row( $this->db->prepare( $sql, $post_id ) );
+            set_transient( 'ipr_rating_' . $post_id, $result, 3600 );
+        }
 
         return $result;
     }
@@ -353,21 +371,25 @@ class IMDB_Post_Ratings {
      * @param int $offset
      * @return array
      */
-    function get_top_rated( $post_type = '', $count = 10, $offset = 0 ) {
-        $where = '';
-
-        if ( $post_type ) {
-            $where = "WHERE post_type = '$post_type'";
-        }
+    function get_top_rated( $post_type = 'post', $count = 10, $offset = 0 ) {
 
         $sql = "SELECT format(SUM(vote) / COUNT(id), 2) AS rating, COUNT(id) AS voter, post_id
                 FROM {$this->table}
-                $where
+                WHERE post_type = '$post_type'
                 GROUP BY post_id
                 ORDER BY rating DESC
                 LIMIT $offset, $count";
 
-        return $this->db->get_results( $sql );
+        // cache the result
+        $result = get_transient( 'ipr_top_' . $post_type );
+
+        if ( false === $result ) {
+            $result = $this->db->get_results( $sql );
+
+            set_transient( 'ipr_top_' . $post_type, $result, 3600 );
+        }
+
+        return $result;
     }
 
     /**
