@@ -1,14 +1,14 @@
+.ip-rating-container {
+    display: inline-block;;
+}
+
 .ip-rating-stars {
-    /*unicode-bidi: bidi-override;
-    direction: rtl;*/
     cursor: pointer;
     margin-right: 10px;
 }
 .ip-rating-stars > span {
     display: inline-block;
     position: relative;
-    /*width: 1.1em;*/
-    /*font-size: 24px;*/
     background-image: url('../images/stars16.png');
     background-position: left top;
     width: 16px;
