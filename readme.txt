@@ -46,7 +46,7 @@ Nothing here
 
 == Screenshots ==
 
-1. Shortcuts
+1. Rating
 
 == Changelog ==
 
