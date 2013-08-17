@@ -1,13 +1,13 @@
 <?php
 /*
-Plugin Name: IMDB Post Ratings
-Plugin URI: http://wedevs.com/
-Description: Post ratings plugin that acts like IMDB
-Version: 0.1
-Author: Tareq Hasan
-Author URI: http://tareq.wedevs.com/
-License: GPL2
-*/
+  Plugin Name: IMDB Post Ratings
+  Plugin URI: http://wedevs.com/
+  Description: Post ratings plugin that acts like IMDB
+  Version: 0.1
+  Author: Tareq Hasan
+  Author URI: http://tareq.wedevs.com/
+  License: GPL2
+ */
 
 /**
  * Copyright (c) 2013 Tareq Hasan (email: tareq@wedevs.com). All rights reserved.
@@ -34,9 +34,9 @@ License: GPL2
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * **********************************************************************
  */
-
 // don't call the file directly
-if ( !defined( 'ABSPATH' ) ) exit;
+if ( !defined( 'ABSPATH' ) )
+    exit;
 
 // load the widget
 require_once dirname( __FILE__ ) . '/top-rated-widget.php';
@@ -100,7 +100,7 @@ class IMDB_Post_Ratings {
     public static function init() {
         static $instance = false;
 
-        if ( ! $instance ) {
+        if ( !$instance ) {
             $instance = new IMDB_Post_Ratings();
         }
 
@@ -203,20 +203,20 @@ class IMDB_Post_Ratings {
 
             // if already voted, then simply update the existing
             // else, add a new vote
-            if ($this->get_user_vote( $post_id, $user_id)) {
+            if ( $this->get_user_vote( $post_id, $user_id ) ) {
                 $this->update_vote( $post_id, $user_id, $vote );
             } else {
                 $this->add_vote( $post_id, $user_id, $vote );
             }
         }
-        
+
         // flush the cache
-        $this->flush_cache($post_id);
+        $this->flush_cache( $post_id );
 
         wp_send_json_success( array(
             'vote_i18n' => number_format_i18n( $vote ),
             'vote' => $vote
-        ));
+        ) );
     }
 
     /**
@@ -237,14 +237,14 @@ class IMDB_Post_Ratings {
         $user_id = get_current_user_id();
 
         $this->delete_vote( $post_id, $user_id );
-        
+
         // flush the cache
-        $this->flush_cache($post_id);
+        $this->flush_cache( $post_id );
 
         wp_send_json_success( array(
             'vote_i18n' => '-',
             'vote' => '0'
-        ));
+        ) );
     }
 
     /**
@@ -257,7 +257,7 @@ class IMDB_Post_Ratings {
     function get_user_vote( $post_id, $user_id ) {
         $sql = "SELECT vote FROM {$this->table} WHERE post_id = %d AND user_id = %d";
 
-        return $this->db->get_row( $this->db->prepare( $sql, $post_id, $user_id ));
+        return $this->db->get_row( $this->db->prepare( $sql, $post_id, $user_id ) );
     }
 
     /**
@@ -272,15 +272,13 @@ class IMDB_Post_Ratings {
         $post_type = get_post_field( 'post_type', $post_id );
 
         return $this->db->insert(
-            $this->table,
-            array(
+            $this->table, array(
                 'post_id' => $post_id,
                 'post_type' => $post_type,
                 'user_id' => $user_id,
                 'vote' => $vote,
                 'updated' => current_time( 'mysql' )
-            ),
-            array(
+            ), array(
                 '%d',
                 '%s',
                 '%d',
@@ -300,9 +298,7 @@ class IMDB_Post_Ratings {
      */
     public function update_vote( $post_id, $user_id, $vote ) {
         return $this->db->update(
-            $this->table,
-            //data
-            array(
+            $this->table, array(
                 'post_id' => $post_id,
                 'user_id' => $user_id,
                 'vote' => $vote,
@@ -341,7 +337,6 @@ class IMDB_Post_Ratings {
         return $this->db->query( $this->db->prepare( $query, $post_id, $user_id ) );
     }
 
-
     /**
      * Get rating for a post
      *
@@ -373,10 +368,11 @@ class IMDB_Post_Ratings {
      */
     function get_top_rated( $post_type = 'post', $count = 10, $offset = 0 ) {
 
-        $sql = "SELECT format(SUM(vote) / COUNT(id), 2) AS rating, COUNT(id) AS voter, post_id
-                FROM {$this->table}
-                WHERE post_type = '$post_type'
-                GROUP BY post_id
+        $sql = "SELECT format(SUM(im.vote) / COUNT(im.id), 2) AS rating, COUNT(im.id) AS voter, im.post_id
+                FROM {$this->table} im
+                LEFT JOIN {$this->db->posts} p ON p.ID = im.post_id
+                WHERE im.post_type = '$post_type' AND p.post_status = 'publish'
+                GROUP BY im.post_id
                 ORDER BY rating DESC
                 LIMIT $offset, $count";
 
@@ -443,6 +439,8 @@ class IMDB_Post_Ratings {
         <?php
     }
 
-} // IMDB_Post_Ratings
+}
+
+// IMDB_Post_Ratings
 
 $imdb_ratings = IMDB_Post_Ratings::init();
