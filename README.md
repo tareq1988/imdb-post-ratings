@@ -19,7 +19,7 @@ Functions
 
 Screenshot
 ---------------
-![screenshot](screenshot.png)
+![screenshot](screenshot-1.png)
 
 
 Author
