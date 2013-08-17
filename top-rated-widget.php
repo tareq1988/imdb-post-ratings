@@ -39,7 +39,7 @@ class IMDB_Post_Ratings_Widget extends WP_Widget {
         echo '<ul>';
         if ( $posts ) {
             foreach ($posts as $item) {
-                $extra = $instance['show_rating'] == 'on' ? ' - <span class="ip-rating-txt">' . $item->rating . '</span>' : '';
+                $extra = $instance['show_rating'] == 'on' ? ' - <span class="ip-rating-txt">' . number_format( $item->rating, 2 ) . '</span>' : '';
                 printf( '<li><a href="%s">%s</a>%s</li>', get_permalink( $item->post_id ), get_the_title( $item->post_id ), $extra );
             }
         } else {
