@@ -86,6 +86,10 @@ class IMDB_Post_Ratings {
         // Loads frontend scripts and styles
         add_action( 'wp_enqueue_scripts', array($this, 'enqueue_scripts') );
 
+        /** Fire our meta box setup function on the post editor screen. **/
+        add_action( 'load-post.php', array($this, 'imdb_post_rating_meta_box_setup') );
+        add_action( 'load-post-new.php', array($this, 'imdb_post_rating_meta_box_setup') );
+
         // Ajax vote
         add_action( 'wp_ajax_ipr_vote', array($this, 'ajax_insert_vote') );
         add_action( 'wp_ajax_ip_vote_del', array($this, 'ajax_delete_vote') );
@@ -199,6 +203,12 @@ class IMDB_Post_Ratings {
         $vote = isset( $_POST['vote'] ) ? intval( $_POST['vote'] ) : 0;
         $user_id = get_current_user_id();
 
+        $post_rating = get_post_meta( $post_id, 'imdb-post-rating', true );
+        if ( $post_rating == 'disable' ) {
+            wp_send_json_error(__('Rating is not being taken in this Movie'));
+        }
+
+
         if ( $post_id && $vote ) {
 
             // if already voted, then simply update the existing
@@ -235,6 +245,11 @@ class IMDB_Post_Ratings {
         // so, the user is logged in huh? proceed on
         $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
         $user_id = get_current_user_id();
+
+        $post_rating = get_post_meta( $post_id, 'imdb-post-rating', true );
+        if ( $post_rating == 'disable' ) {
+            wp_send_json_error(__('Rating is not being taken in this movie'));
+        }
 
         $this->delete_vote( $post_id, $user_id );
 
@@ -399,7 +414,7 @@ class IMDB_Post_Ratings {
 
         if ( !$post_id ) {
             $post_id = $post->ID;
-        }
+        }              
 
         $base_rating = apply_filters( 'ip_base_rating', 10 );
         $given_vote = $this->get_user_vote( $post_id, get_current_user_id() );
@@ -415,6 +430,7 @@ class IMDB_Post_Ratings {
             $user_vote = 0;
             $user_vote_i18n = '-';
         }
+
         ?>
         <div class="ip-rating-container">
             <span class="ip-rating-stars">
@@ -438,6 +454,97 @@ class IMDB_Post_Ratings {
 
         <?php
     }
+
+    /**
+    * Meta box setup
+    *
+    * @return void
+    */
+    function imdb_post_rating_meta_box_setup() {
+        add_action( 'add_meta_boxes', array($this, 'imdb_add_post_rating_meta_box') );
+        add_action( 'save_post', array($this, 'imdb_save_post_rating_meta_box'), 10, 1);
+    }
+
+    /**
+    * Create meta boxes to be displayed on the post editor screen
+    *
+    * @return void
+    */
+    function imdb_add_post_rating_meta_box() {
+        $post_types = get_post_types( array( 'public' => true ) );
+        foreach ( $post_types as $post_type ) {
+            add_meta_box(
+                'imdb-post-rating',      // Unique ID
+                esc_html__( 'Post Rating', 'rating' ),    // Title
+                array($this, 'imdb_post_rating_meta_box'),   // Callback function
+                $post_type,         // Admin page (or post type)
+                'side',         // Context
+                'default'         // Priority
+            );
+        }
+    }
+
+    /**
+    * Display the post meta rating box
+    *
+    * @return void
+    */
+    function imdb_post_rating_meta_box( $object, $box ) { ?>
+    <?php wp_nonce_field( basename( __FILE__ ), 'imdb_post_rating_nonce' ); ?>
+      <p>
+        <label for="imdb-post-rating"><?php _e( "Enable/Disable Post Rating", 'rating' ); ?></label>
+        <br/>
+        <select name="imdb-post-rating" id="imdb-post-rating" />
+          <option value="enable">Enable</option>
+          <option value="disable">Disable</option>
+        </select>
+      </p>
+    <?php }
+
+    /**
+    * Save the meta box's post metadata
+    *
+    * @return void
+    */
+    public function imdb_save_post_rating_meta_box( $post_id = null) {
+        global $post;
+
+        if ( !$post_id ) {
+            $post_id = $post->ID;
+        }
+
+        /* Verify the nonce before proceeding. */
+        if ( !isset($_POST['imdb_post_rating_nonce']) || !wp_verify_nonce($_POST['imdb_post_rating_nonce'],basename(__FILE__)))
+          return $post_id;
+
+        /* Get the post type object. */
+        $post_type = get_post_type_object( $post->post_type );
+
+        /* Check if the current user has permission to edit the post. */
+        if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+            return $post_id;
+
+        /* Get the posted data and sanitize it for use as an HTML class. */
+        $new_meta_value = ( isset( $_POST['imdb-post-rating'] ) ? sanitize_html_class( $_POST['imdb-post-rating'] ) : '' );
+
+        /* Get the meta key. */
+        $meta_key = 'imdb-post-rating';
+
+        /* Get the meta value of the custom field key. */
+        $meta_value = get_post_meta( $post_id, $meta_key, true );
+
+        /* If a new meta value was added and there was no previous value, add it. */
+        if ( $new_meta_value && '' == $meta_value )
+           add_post_meta( $post_id, $meta_key, $new_meta_value, true );
+
+        /* If the new meta value does not match the old value, update it. */
+        elseif ( $new_meta_value && $new_meta_value != $meta_value )
+           update_post_meta( $post_id, $meta_key, $new_meta_value );
+
+        /* If there is no new meta value but an old value exists, delete it. */
+        elseif ( '' == $new_meta_value && $meta_value )
+           delete_post_meta( $post_id, $meta_key, $meta_value );
+        }
 
 }
 
